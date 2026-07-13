@@ -39,3 +39,17 @@ AIR_DENSITY = 1.225         # kg/m^3 at sea level
 # -------------------------
 
 MAX_WING_LOADING = 150      # N/m^2
+
+
+# =========================
+# Wing Parameters
+# =========================
+
+WING_SPAN = 1.20          # m
+ROOT_CHORD = 0.36         # m
+TIP_CHORD = 0.20          # m
+
+DIHEDRAL = 5              # degrees
+SWEEP = 0                 # degrees
+
+AIRFOIL = "NACA4412"

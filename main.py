@@ -65,24 +65,53 @@ from aerodynamics.analysis import evaluate_design
 # print("Wing Span:", WING_SPAN, "m")
 # print("Cruise Speed:", CRUISE_SPEED, "m/s")
 
-from aircraft.assembly import Aircraft
+# from aircraft.assembly import Aircraft
 
 
-def main():
-    aircraft = Aircraft()
+# def main():
+#     aircraft = Aircraft()
 
-    aircraft.display_info()
+#     aircraft.display_info()
 
-    lift = required_lift(aircraft)
-    print(f"\nRequired Lift: {lift:.2f} N") 
+#     lift = required_lift(aircraft)
+#     print(f"\nRequired Lift: {lift:.2f} N") 
 
-    q = dynamic_pressure(aircraft)
-    print(f"Dynamic Pressure: {q:.2f} Pa")
+#     q = dynamic_pressure(aircraft)
+#     print(f"Dynamic Pressure: {q:.2f} Pa")
 
-    cl = required_cl(aircraft)
-    print(f"Required CL: {cl:.3f}")
+#     cl = required_cl(aircraft)
+#     print(f"Required CL: {cl:.3f}")
 
-    evaluate_design(aircraft)
+#     evaluate_design(aircraft)
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
+
+
+# from airfoils.loader import AirfoilLoader
+
+# from airfoils.naca import NACA4Airfoil
+
+# airfoil = NACA4Airfoil("4412")
+
+# airfoil.display_info()
+
+# loader = AirfoilLoader("airfoils/naca4412.dat")
+
+# coordinates = loader.load_coordinates()
+
+# print(f"\nLoaded {len(coordinates)} airfoil coordinates.\n")
+
+# print("First five coordinates:")
+
+# for point in coordinates[:5]:
+#     print(point)
+
+from airfoils.naca import NACA4Airfoil
+from visualization.plot_airfoil import plot_airfoil
+
+airfoil = NACA4Airfoil("4412")
+
+upper, lower = airfoil.generate_coordinates()
+
+plot_airfoil(upper, lower)
