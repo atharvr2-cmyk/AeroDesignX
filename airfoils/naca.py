@@ -35,6 +35,17 @@ class NACA4Airfoil:
         self.camber_position = int(code[1]) / 10
         self.thickness = int(code[2:]) / 100
 
+        if not isinstance(num_points, int) or num_points < 10:
+            raise ValueError(
+        "num_points must be an integer greater than or equal to 10."
+    )
+        
+        if self.max_camber > 0 and self.camber_position == 0:
+            raise ValueError(
+        "A cambered NACA airfoil must have a nonzero "
+        "camber-position digit."
+    ) 
+
     def display_info(self):
         """
         Display the decoded airfoil parameters.
@@ -110,7 +121,8 @@ class NACA4Airfoil:
         Generate upper and lower surface coordinates.
         """
 
-        x_values = np.linspace(0.0, 1.0, self.num_points)
+        beta = np.linspace(0.0, math.pi, self.num_points)
+        x_values = 0.5 * (1.0 - np.cos(beta))
 
         upper = []
         lower = []

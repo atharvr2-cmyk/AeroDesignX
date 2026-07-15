@@ -12,7 +12,7 @@ aerodynamic properties such as:
 """
 
 import math
-
+from airfoils.naca import NACA4Airfoil
 
 class Wing:
     """
@@ -46,6 +46,17 @@ class Wing:
         sweep : float
             Sweep angle (degrees)
         """
+        if span <= 0:
+            raise ValueError("Wing span must be greater than zero.")
+
+        if root_chord <= 0:
+            raise ValueError("Root chord must be greater than zero.")
+
+        if tip_chord <= 0:
+            raise ValueError("Tip chord must be greater than zero.")
+
+        if not isinstance(airfoil, str):
+            raise TypeError("Airfoil designation must be a string.")
 
         self.span = span
         self.root_chord = root_chord
@@ -56,18 +67,10 @@ class Wing:
         self.sweep = sweep
 
         # Calculated properties
-        self.area = self.calculate_area()
+        self.area = self.span * (self.root_chord + self.tip_chord) / 2
         self.taper_ratio = self.tip_chord / self.root_chord
-
-    def calculate_area(self):
-        """
-        Calculate the trapezoidal wing planform area.
-        """
-        return (
-            (self.root_chord + self.tip_chord)
-            * self.span
-            / 2
-        )
+    
+    
 
     def aspect_ratio(self):
         """
@@ -90,21 +93,28 @@ class Wing:
     def wing_outline(self):
         """
         Returns the four corner points of the wing
-        planform.
-
-        Coordinate System:
-        x = chordwise direction
-        y = spanwise direction
-        z = vertical direction
+        including sweep and dihedral.
         """
 
         half_span = self.span / 2
 
+        sweep_offset = half_span * math.tan(math.radians(self.sweep))
+        dihedral_offset = half_span * math.tan(math.radians(self.dihedral))
+
         root_le = (0.0, 0.0, 0.0)
         root_te = (self.root_chord, 0.0, 0.0)
 
-        tip_le = (0.0, half_span, 0.0)
-        tip_te = (self.tip_chord, half_span, 0.0)
+        tip_le = (
+            sweep_offset,
+            half_span,
+            dihedral_offset,
+        )
+
+        tip_te = (
+            sweep_offset + self.tip_chord,
+            half_span,
+            dihedral_offset,
+        )
 
         return {
             "Root Leading Edge": root_le,
@@ -112,6 +122,61 @@ class Wing:
             "Tip Leading Edge": tip_le,
             "Tip Trailing Edge": tip_te,
         }
+
+
+    def generate_sections(self, n_points=100):
+        """
+        Generate root and tip airfoil sections.
+        """
+
+        airfoil = NACA4Airfoil(
+            self.airfoil,
+            n_points
+        )
+
+        upper, lower = airfoil.generate_coordinates()
+
+        # Combine upper and lower surfaces
+        coordinates = upper + lower[::-1]
+
+        root_section = []
+        tip_section = []
+
+        half_span = self.span / 2
+
+        sweep_offset = half_span * math.tan(
+            math.radians(self.sweep)
+        )
+
+        dihedral_offset = half_span * math.tan(
+            math.radians(self.dihedral)
+        )
+
+
+        for x, z in coordinates:
+
+            # Root airfoil
+            root_section.append(
+                (
+                    x * self.root_chord,
+                    0,
+                    z * self.root_chord
+                )
+            )
+
+
+            # Tip airfoil
+            tip_section.append(
+                (
+                    sweep_offset + x * self.tip_chord,
+                    half_span,
+                    dihedral_offset + z * self.tip_chord
+                )
+            )
+
+
+        return root_section, tip_section
+    
 
     def display_info(self):
         """
@@ -129,7 +194,7 @@ class Wing:
         print(f"Dihedral:           {self.dihedral:.1f}°")
         print(f"Sweep:              {self.sweep:.1f}°")
         print(f"Airfoil:            {self.airfoil}")
-        
+
         print("\nWing Outline Coordinates")
 
         for name, point in self.wing_outline().items():

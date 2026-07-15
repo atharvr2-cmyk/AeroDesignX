@@ -5,21 +5,64 @@ Functions related to lift generation.
 """
 
 
-def required_lift(aircraft):
+def required_lift(mass, gravity):
     """
-    Returns the lift required for level flight.
+    Calculate the lift required for steady, level flight.
+
+    In level flight, lift must equal aircraft weight.
+
+    Parameters
+    ----------
+    mass : float
+        Aircraft mass in kilograms.
+
+    gravity : float
+        Gravitational acceleration in m/s^2.
+
+    Returns
+    -------
+    float
+        Required lift in newtons.
     """
 
-    return aircraft.mass * aircraft.gravity
+    return mass * gravity
 
-def required_cl(aircraft):
+
+def required_cl(
+    mass,
+    gravity,
+    air_density,
+    velocity,
+    wing_area,
+):
     """
     Calculate the lift coefficient required
-    for steady level flight.
+    for steady, level flight.
+
+    Parameters
+    ----------
+    mass : float
+        Aircraft mass in kilograms.
+
+    gravity : float
+        Gravitational acceleration in m/s^2.
+
+    air_density : float
+        Air density in kg/m^3.
+
+    velocity : float
+        Flight speed in m/s.
+
+    wing_area : float
+        Wing area in m^2.
+
+    Returns
+    -------
+    float
+        Required lift coefficient.
     """
 
-    lift = required_lift(aircraft)
+    lift = required_lift(mass, gravity)
+    dynamic_pressure = 0.5 * air_density * velocity**2
 
-    q = 0.5 * aircraft.air_density * aircraft.cruise_speed ** 2
-
-    return lift / (q * aircraft.wing_area)
+    return lift / (dynamic_pressure * wing_area)
