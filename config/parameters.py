@@ -49,3 +49,28 @@ BATTERY_CAPACITY_WH = 220.0      # Wh
 AVERAGE_POWER_W = 180.0          # W
 BATTERY_USABLE_FRACTION = 0.80   # 80% usable capacity
 
+# --------------------------------------------------
+# Mission requirements
+# --------------------------------------------------
+
+REQUIRED_ENDURANCE_HOURS = 1.0
+
+PAYLOAD_MASS = 0.50
+
+# --------------------------------------------------
+# Component mass assumptions
+# --------------------------------------------------
+
+FUSELAGE_MASS = 0.45
+TAIL_MASS = 0.15
+PROPULSION_MASS = 0.35
+AVIONICS_MASS = 0.20
+
+# --------------------------------------------------
+# Energy and propulsion assumptions
+# --------------------------------------------------
+
+BATTERY_SPECIFIC_ENERGY_WH_PER_KG = 200.0
+PROPULSIVE_EFFICIENCY = 0.70
+AVIONICS_POWER_W = 15.0
+BATTERY_RESERVE_FRACTION = 0.15
