@@ -144,14 +144,14 @@ from visualization.plot_performance import plot_performance_curves
 # for point in coordinates[:5]:
 #     print(point)
 
-# from airfoils.naca import NACA4Airfoil
-# from visualization.plot_airfoil import plot_airfoil
+from airfoils.naca import NACA4Airfoil
+from visualization.plot_airfoil import plot_airfoil
 
-# airfoil = NACA4Airfoil("4412")
+airfoil = NACA4Airfoil("4412")
 
-# upper, lower = airfoil.generate_coordinates()
+upper, lower = airfoil.generate_coordinates()
 
-# plot_airfoil(upper, lower)
+plot_airfoil(upper, lower)
 
 wing = Wing(
     span=WING_SPAN,

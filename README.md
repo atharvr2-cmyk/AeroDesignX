@@ -157,15 +157,32 @@ For example, the designation `NACA 4412` represents:
 
 The generated upper and lower surface coordinates can be plotted for geometry verification and later used for wing and CAD generation.
 
-### NACA 4412 Output
+## Example Results
 
-Add a screenshot of the generated NACA 4412 plot here:
+### Airfoil Geometry
 
-```markdown
-![Generated NACA 4412 airfoil](docs/images/naca4412.png)
-```
+![NACA 4412](docs/images/naca4412.png)
 
----
+### Wing Geometry
+
+![Wing Geometry](docs/images/wing_geometry.png)
+
+### Drag Force vs Flight Speed
+
+![Drag Force vs Flight Speed](docs/images/drag_force_vs_flight_speed.png)
+
+### Lift Coefficient vs Angle of Attack
+
+![Lift Coefficient vs Angle of Attack](docs/images/lift_coefficient_vs_aoa.png)
+
+### Lift Coefficient vs Drag Coefficient
+
+![Lift Coefficient vs Drag Coefficient](docs/images/lift_coefficient_vs_drag_coefficient.png)
+
+### Lift Coefficient vs Flight Speed
+
+![Lift Coefficient vs Flight Speed](docs/images/lift_coefficient_vs_flight_speed.png)
+
 
 ## Aerodynamic Calculations
 

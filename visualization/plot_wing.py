@@ -127,6 +127,13 @@ def plot_wing_3d(wing, show_full_wing=True):
     _set_equal_axes(ax)
     ax.view_init(elev=24, azim=-55)
     plt.tight_layout()
+
+    plt.savefig(
+        "docs/images/wing_geometry.png",
+        dpi=300,
+        bbox_inches="tight"
+    )
+
     plt.show()
 
 

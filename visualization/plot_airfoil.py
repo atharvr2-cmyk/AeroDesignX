@@ -24,4 +24,12 @@ def plot_airfoil(upper, lower):
 
     plt.ylabel("Thickness")
 
+    plt.tight_layout()
+
+    plt.savefig(
+        "docs/images/naca4412.png",
+        dpi=300,
+        bbox_inches="tight"
+    )
+
     plt.show()
