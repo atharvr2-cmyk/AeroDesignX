@@ -1,3 +1,8 @@
+<p align="center">
+  <img src="docs/images/banner.png" alt="AeroDesignX Banner" width="100%">
+</p>
+
+
 # AeroDesignX ✈️
 
 ### Automated UAV Design and Aerodynamic Analysis in Python
