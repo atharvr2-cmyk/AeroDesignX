@@ -1,4 +1,13 @@
-# AeroDesignX
+# AeroDesignX ✈️
+
+### Automated UAV Design and Aerodynamic Analysis in Python
+
+![Python](https://img.shields.io/badge/Python-3.13-blue)
+
+![Status](https://img.shields.io/badge/Status-Active%20Development-success)
+
+![License](https://img.shields.io/badge/License-MIT-green)
+
 
 AeroDesignX is a Python-based conceptual aircraft design and analysis tool for small fixed-wing unmanned aerial vehicles.
 
