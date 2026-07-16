@@ -21,6 +21,10 @@ def print_performance_report(
     wing_loading,
     stall_speed,
     stall_margin,
+    battery_capacity_wh,
+    average_power_w,
+    endurance_hours,
+    range_km,
 ):
     """
     Print a formatted aircraft performance report.
@@ -84,3 +88,11 @@ def print_performance_report(
         print("PASS: Aerodynamic efficiency is acceptable.")
 
     print("=" * 54)
+
+    print()
+    print("Battery and Range")
+    print("-" * 60)
+    print(f"Battery Capacity:      {battery_capacity_wh:.1f} Wh")
+    print(f"Average Power:         {average_power_w:.1f} W")
+    print(f"Estimated Endurance:   {endurance_hours:.2f} hr")
+    print(f"Estimated Range:       {range_km:.2f} km")

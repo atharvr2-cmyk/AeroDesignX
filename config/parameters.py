@@ -43,3 +43,9 @@ SWEEP = 0                 # degrees
 
 AIRFOIL = "4412"
 
+# Battery Parameters
+
+BATTERY_CAPACITY_WH = 220.0      # Wh
+AVERAGE_POWER_W = 180.0          # W
+BATTERY_USABLE_FRACTION = 0.80   # 80% usable capacity
+
