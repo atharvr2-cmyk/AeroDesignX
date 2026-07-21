@@ -84,6 +84,7 @@ from visualization.plot_wing import plot_wing_3d
 from visualization.plot_optimization import (
     plot_optimization,
 )
+from visualization.dashboard import plot_design_dashboard
 
 
 def main():
@@ -701,6 +702,16 @@ def main():
         wing_area=wing_area,
         aspect_ratio=aspect_ratio,
         cruise_speed=CRUISE_SPEED,
+    )
+
+    plot_design_dashboard(
+        wing=wing,
+        operating_cl=required_cl_value,
+        optimization_history=best_random_design[
+            "optimization_history"
+        ],
+        aircraft_results=best_random_design,
+        mission_results=mission_evaluation,
     )
 
 if __name__ == "__main__":

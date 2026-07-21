@@ -8,7 +8,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_wing_3d(wing, show_full_wing=True):
+def plot_wing_3d(
+    wing,
+    show_full_wing=True,
+    ax=None,
+    show=True,
+    save_path="docs/images/wing_geometry.png",
+):
     """
     Plot the wing as a three-dimensional surface.
 
@@ -20,6 +26,23 @@ def plot_wing_3d(wing, show_full_wing=True):
     show_full_wing : bool, optional
         If True, display the complete mirrored wing.
         If False, display only the right half-wing.
+
+    ax : matplotlib.axes.Axes, optional
+        Three-dimensional axes on which to draw the wing.
+        If no axes are supplied, the function creates a new
+        three-dimensional figure and axes.
+
+    show : bool, optional
+        If True, display the figure when this function creates it.
+
+    save_path : str or None, optional
+        File path used to save the standalone wing image.
+        Set to None to disable saving.
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The three-dimensional axes containing the wing plot.
     """
 
     root_section, tip_section = wing.generate_sections()
@@ -27,7 +50,6 @@ def plot_wing_3d(wing, show_full_wing=True):
     root = np.asarray(root_section, dtype=float)
     tip = np.asarray(tip_section, dtype=float)
 
-    # Validate generated coordinate arrays
     if root.ndim != 2 or root.shape[1] != 3:
         raise ValueError(
             "Root section must contain 3D coordinates."
@@ -44,16 +66,21 @@ def plot_wing_3d(wing, show_full_wing=True):
             "the same number of points."
         )
 
-    # Create coordinate grids for the right half-wing
+    created_figure = False
+
+    if ax is None:
+        figure = plt.figure(figsize=(11, 7))
+        ax = figure.add_subplot(111, projection="3d")
+        created_figure = True
+    elif not hasattr(ax, "get_zlim3d"):
+        raise ValueError(
+            "The supplied axes must be three-dimensional."
+        )
+
     x_right = np.vstack((root[:, 0], tip[:, 0]))
     y_right = np.vstack((root[:, 1], tip[:, 1]))
     z_right = np.vstack((root[:, 2], tip[:, 2]))
 
-    # Create the 3D figure
-    fig = plt.figure(figsize=(11, 7))
-    ax = fig.add_subplot(111, projection="3d")
-
-    # Plot right half-wing surface
     ax.plot_surface(
         x_right,
         y_right,
@@ -63,7 +90,6 @@ def plot_wing_3d(wing, show_full_wing=True):
         linewidth=0.25,
     )
 
-    # Plot root airfoil outline
     ax.plot(
         root[:, 0],
         root[:, 1],
@@ -72,7 +98,6 @@ def plot_wing_3d(wing, show_full_wing=True):
         label="Root Section",
     )
 
-    # Plot right tip airfoil outline
     ax.plot(
         tip[:, 0],
         tip[:, 1],
@@ -81,19 +106,15 @@ def plot_wing_3d(wing, show_full_wing=True):
         label="Right Tip Section",
     )
 
-    # Generate the mirrored left half-wing
     if show_full_wing:
-
         left_tip = tip.copy()
 
-        # Mirror across aircraft centerline
         left_tip[:, 1] *= -1
 
         x_left = np.vstack((root[:, 0], left_tip[:, 0]))
         y_left = np.vstack((root[:, 1], left_tip[:, 1]))
         z_left = np.vstack((root[:, 2], left_tip[:, 2]))
 
-        # Plot left half-wing surface
         ax.plot_surface(
             x_left,
             y_left,
@@ -103,7 +124,6 @@ def plot_wing_3d(wing, show_full_wing=True):
             linewidth=0.25,
         )
 
-        # Plot left tip airfoil outline
         ax.plot(
             left_tip[:, 0],
             left_tip[:, 1],
@@ -112,7 +132,6 @@ def plot_wing_3d(wing, show_full_wing=True):
             label="Left Tip Section",
         )
 
-    # Plot formatting
     ax.set_title(
         f"AeroDesignX Wing — NACA {wing.airfoil}",
         pad=20,
@@ -126,15 +145,21 @@ def plot_wing_3d(wing, show_full_wing=True):
 
     _set_equal_axes(ax)
     ax.view_init(elev=24, azim=-55)
-    plt.tight_layout()
 
-    plt.savefig(
-        "docs/images/wing_geometry.png",
-        dpi=300,
-        bbox_inches="tight"
-    )
+    if created_figure:
+        ax.figure.tight_layout()
 
-    plt.show()
+        if save_path is not None:
+            ax.figure.savefig(
+                save_path,
+                dpi=300,
+                bbox_inches="tight",
+            )
+
+        if show:
+            plt.show()
+
+    return ax
 
 
 def _set_equal_axes(ax):
@@ -151,7 +176,10 @@ def _set_equal_axes(ax):
     y_range = abs(y_limits[1] - y_limits[0])
     z_range = abs(z_limits[1] - z_limits[0])
 
-    minimum_display_range = 0.08 * max(x_range, y_range)
+    minimum_display_range = 0.08 * max(
+        x_range,
+        y_range,
+    )
 
     ax.set_box_aspect(
         (

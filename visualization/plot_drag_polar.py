@@ -15,6 +15,8 @@ def plot_drag_polar(
     cd0=0.03,
     oswald_efficiency=0.8,
     operating_cl=None,
+    ax=None,
+    show=True,
 ):
     """
     Plot the aircraft drag polar.
@@ -24,15 +26,45 @@ def plot_drag_polar(
     aspect_ratio : float
         Wing aspect ratio.
 
-    cd0 : float
+    cd0 : float, optional
         Zero-lift drag coefficient.
 
-    oswald_efficiency : float
+    oswald_efficiency : float, optional
         Oswald efficiency factor.
 
     operating_cl : float, optional
         Current operating lift coefficient.
+
+    ax : matplotlib.axes.Axes, optional
+        Axes on which to draw the plot. If no axes are supplied,
+        the function creates a new figure and axes.
+
+    show : bool, optional
+        If True, display the figure. This is mainly used when the
+        function creates its own figure.
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The axes containing the completed drag-polar plot.
     """
+
+    if aspect_ratio <= 0:
+        raise ValueError("Aspect ratio must be greater than zero.")
+
+    if cd0 < 0:
+        raise ValueError("CD0 cannot be negative.")
+
+    if oswald_efficiency <= 0:
+        raise ValueError(
+            "Oswald efficiency must be greater than zero."
+        )
+
+    created_figure = False
+
+    if ax is None:
+        _, ax = plt.subplots(figsize=(8, 6))
+        created_figure = True
 
     cl_values = np.linspace(-0.5, 1.5, 200)
 
@@ -46,11 +78,10 @@ def plot_drag_polar(
         for cl in cl_values
     ]
 
-    plt.figure(figsize=(8, 6))
-
-    plt.plot(
+    ax.plot(
         cd_values,
         cl_values,
+        linewidth=2,
         label="Drag Polar",
     )
 
@@ -62,17 +93,24 @@ def plot_drag_polar(
             oswald_efficiency=oswald_efficiency,
         )
 
-        plt.scatter(
+        ax.scatter(
             operating_cd,
             operating_cl,
             s=70,
+            zorder=3,
             label="Cruise Operating Point",
         )
 
-    plt.title("Aircraft Drag Polar")
-    plt.xlabel("Drag Coefficient, $C_D$")
-    plt.ylabel("Lift Coefficient, $C_L$")
-    plt.grid(True)
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+    ax.set_title("Aircraft Drag Polar")
+    ax.set_xlabel("Drag Coefficient, $C_D$")
+    ax.set_ylabel("Lift Coefficient, $C_L$")
+    ax.grid(True)
+    ax.legend()
+
+    if created_figure:
+        ax.figure.tight_layout()
+
+        if show:
+            plt.show()
+
+    return ax
