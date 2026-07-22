@@ -44,7 +44,10 @@ def evaluate_mission(
     # ----------------------------------------------------------
 
     actual_stall_speed = aircraft_results["stall_speed"]
-    maximum_stall_speed = mission_requirements["maximum_stall_speed"]
+    maximum_stall_speed = mission_requirements.get(
+        "maximum_stall_speed",
+        mission_requirements.get("stall_speed"),
+    )
 
     if actual_stall_speed <= maximum_stall_speed:
         penalties["stall_speed"] = 0.0
@@ -117,9 +120,10 @@ def evaluate_mission(
     # Endurance requirement
     # ----------------------------------------------------------
 
-    required_endurance = mission_requirements[
-        "endurance_with_reserve_hours"
-    ]
+    required_endurance = mission_requirements.get(
+        "endurance_with_reserve_hours",
+        mission_requirements.get("endurance_hr"),
+    )
 
     if estimated_endurance_hours is None:
         penalties["endurance"] = 0.0
@@ -147,7 +151,10 @@ def evaluate_mission(
     # Range requirement
     # ----------------------------------------------------------
 
-    required_range = mission_requirements["required_range_km"]
+    required_range = mission_requirements.get(
+        "required_range_km",
+        mission_requirements.get("range_km"),
+    )
 
     if estimated_range_km is None:
         penalties["range"] = 0.0
@@ -181,7 +188,10 @@ def evaluate_mission(
     feasible = len(failed_constraints) == 0
 
     return {
-        "mission": mission_requirements["mission_name"],
+        "mission": mission_requirements.get(
+            "mission_name",
+            mission_requirements.get("name", "Custom Mission"),
+        ),
         "score": score,
         "feasible": feasible,
         "failed_constraints": failed_constraints,

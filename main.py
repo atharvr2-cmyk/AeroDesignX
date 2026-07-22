@@ -40,12 +40,10 @@ from config.parameters import (
     AVIONICS_MASS,
     AVIONICS_POWER_W,
     AVERAGE_POWER_W,
-    BATTERY_CAPACITY_WH,
     BATTERY_RESERVE_FRACTION,
     BATTERY_SPECIFIC_ENERGY_WH_PER_KG,
     BATTERY_USABLE_FRACTION,
     CL_MAX,
-    CRUISE_SPEED,
     DIHEDRAL,
     FUSELAGE_MASS,
     GRAVITY,
@@ -85,12 +83,56 @@ from visualization.plot_optimization import (
     plot_optimization,
 )
 from visualization.dashboard import plot_design_dashboard
-
+from input.user_input import collect_user_requirements
 
 def main():
     """
     Run the complete AeroDesignX aircraft analysis.
     """
+
+    requirements = collect_user_requirements()
+    requirements.display()
+
+    user_cruise_speed = requirements.cruise_speed
+    user_battery_capacity = requirements.battery_capacity
+    user_payload_mass = requirements.payload_mass
+    user_max_wingspan = requirements.max_wingspan
+    user_mission = requirements.mission
+
+    # MASS already includes the baseline payload from parameters.py.
+    # Replace that baseline payload with the payload entered by the user.
+    analysis_mass = max(
+        0.1,
+        MASS - PAYLOAD_MASS + user_payload_mass,
+    )
+
+    mission_name_mapping = {
+        "Trainer": "trainer",
+        "Cargo": "cargo",
+        "Survey": "surveillance",
+        "Racing": "racing",
+        "VTOL Support": "general",
+    }
+
+    mission_profile_name = mission_name_mapping.get(
+        user_mission,
+        "general",
+    )
+
+    # Create span candidates that never exceed the user's limit.
+    minimum_span = min(0.8, user_max_wingspan)
+    span_values = [
+        minimum_span
+        + index * (user_max_wingspan - minimum_span) / 6
+        for index in range(7)
+    ]
+
+    # Search close to the requested cruise speed instead of using
+    # the old fixed 12-18 m/s range.
+    cruise_speed_values = sorted({
+        max(1.0, user_cruise_speed * factor)
+        for factor in (0.85, 0.95, 1.00, 1.05)
+    })
 
     # --------------------------------------------------
     # Airfoil generation
@@ -107,7 +149,7 @@ def main():
     # --------------------------------------------------
 
     wing = Wing(
-        span=WING_SPAN,
+        span=min(WING_SPAN, user_max_wingspan),
         root_chord=ROOT_CHORD,
         tip_chord=TIP_CHORD,
         airfoil=AIRFOIL,
@@ -121,7 +163,7 @@ def main():
     # Basic aircraft properties
     # --------------------------------------------------
 
-    weight = MASS * GRAVITY
+    weight = analysis_mass * GRAVITY
     wing_area = wing.area
     aspect_ratio = wing.aspect_ratio()
     mean_aerodynamic_chord = (
@@ -133,15 +175,15 @@ def main():
     # --------------------------------------------------
 
     lift_required = required_lift(
-        mass=MASS,
+        mass=analysis_mass,
         gravity=GRAVITY,
     )
 
     required_cl_value = required_cl(
-        mass=MASS,
+        mass=analysis_mass,
         gravity=GRAVITY,
         air_density=AIR_DENSITY,
-        velocity=CRUISE_SPEED,
+        velocity=user_cruise_speed,
         wing_area=wing_area,
     )
 
@@ -161,7 +203,7 @@ def main():
 
     drag = drag_force(
         air_density=AIR_DENSITY,
-        velocity=CRUISE_SPEED,
+        velocity=user_cruise_speed,
         wing_area=wing_area,
         cd=total_cd,
     )
@@ -188,24 +230,24 @@ def main():
     )
 
     stall_margin = stall_speed_margin(
-        cruise_speed=CRUISE_SPEED,
+        cruise_speed=user_cruise_speed,
         stall_speed_value=stall_speed_value,
     )
 
     reynolds_value = reynolds_number(
         rho=AIR_DENSITY,
-        velocity=CRUISE_SPEED,
+        velocity=user_cruise_speed,
         chord=mean_aerodynamic_chord,
     )
 
     endurance_hours = estimate_endurance(
-        battery_capacity_wh=BATTERY_CAPACITY_WH,
+        battery_capacity_wh=user_battery_capacity,
         average_power_w=AVERAGE_POWER_W,
         usable_fraction=BATTERY_USABLE_FRACTION,
     )
 
     range_km = estimate_range(
-        cruise_speed=CRUISE_SPEED,
+        cruise_speed=user_cruise_speed,
         endurance_hours=endurance_hours,
     )
 
@@ -234,9 +276,9 @@ def main():
 
     print_performance_report(
         aircraft_name=AIRCRAFT_NAME,
-        mass=MASS,
+        mass=analysis_mass,
         weight=weight,
-        cruise_speed=CRUISE_SPEED,
+        cruise_speed=user_cruise_speed,
         wing=wing,
         reynolds_number=reynolds_value,
         required_cl=required_cl_value,
@@ -247,7 +289,7 @@ def main():
         wing_loading=wing_loading_value,
         stall_speed=stall_speed_value,
         stall_margin=stall_margin,
-        battery_capacity_wh=BATTERY_CAPACITY_WH,
+        battery_capacity_wh=user_battery_capacity,
         average_power_w=AVERAGE_POWER_W,
         endurance_hours=endurance_hours,
         range_km=range_km,
@@ -264,16 +306,6 @@ def main():
     # Wing-span parameter sweep
     # --------------------------------------------------
 
-    span_values = [
-        0.8,
-        0.9,
-        1.0,
-        1.1,
-        1.2,
-        1.3,
-        1.4,
-    ]
-
     sweep_results = sweep_wing_span(
         span_values=span_values,
         root_chord=ROOT_CHORD,
@@ -281,10 +313,10 @@ def main():
         airfoil=AIRFOIL,
         sweep=SWEEP,
         dihedral=DIHEDRAL,
-        mass=MASS,
+        mass=analysis_mass,
         gravity=GRAVITY,
         air_density=AIR_DENSITY,
-        cruise_speed=CRUISE_SPEED,
+        cruise_speed=user_cruise_speed,
         cl_max=CL_MAX,
     )
 
@@ -372,14 +404,7 @@ def main():
     # --------------------------------------------------
 
     optimization_results = optimize_design(
-        span_values=[
-            0.9,
-            1.0,
-            1.1,
-            1.2,
-            1.3,
-            1.4,
-        ],
+        span_values=span_values,
         root_chord_values=[
             0.24,
             0.28,
@@ -392,16 +417,11 @@ def main():
             0.24,
             0.28,
         ],
-        cruise_speed_values=[
-            12.0,
-            14.0,
-            16.0,
-            18.0,
-        ],
+        cruise_speed_values=cruise_speed_values,
         airfoil=AIRFOIL,
         sweep=SWEEP,
         dihedral=DIHEDRAL,
-        mass=MASS,
+        mass=analysis_mass,
         gravity=GRAVITY,
         air_density=AIR_DENSITY,
         cl_max=CL_MAX,
@@ -499,17 +519,17 @@ def main():
 
     mission_sizing = size_aircraft_for_mission(
         wing=wing,
-        initial_mass=MASS,
+        initial_mass=analysis_mass,
         gravity=GRAVITY,
         air_density=AIR_DENSITY,
-        cruise_speed=CRUISE_SPEED,
+        cruise_speed=user_cruise_speed,
         cl_max=CL_MAX,
         endurance_hours=REQUIRED_ENDURANCE_HOURS,
         fuselage_mass=FUSELAGE_MASS,
         tail_mass=TAIL_MASS,
         propulsion_mass=PROPULSION_MASS,
         avionics_mass=AVIONICS_MASS,
-        payload_mass=PAYLOAD_MASS,
+        payload_mass=user_payload_mass,
         battery_specific_energy_wh_per_kg=(
             BATTERY_SPECIFIC_ENERGY_WH_PER_KG
         ),
@@ -581,17 +601,180 @@ def main():
     # Mission selection and requirements
     # --------------------------------------------------
 
-    selected_mission = get_mission("cargo")
+    selected_mission = get_mission(
+        mission_profile_name
+    )
 
-    selected_mission.display()
-
+    # Start with the default values stored in the selected
+    # mission profile.
     mission_requirements = calculate_mission_requirements(
         selected_mission
     )
 
-    display_mission_requirements(
-        mission_requirements
+    # --------------------------------------------------
+    # Override preset values with user requirements
+    # --------------------------------------------------
+
+    empty_aircraft_mass = MASS - PAYLOAD_MASS
+    user_total_mass = (
+        empty_aircraft_mass
+        + user_payload_mass
     )
+
+    mission_requirements["payload_mass"] = (
+        user_payload_mass
+    )
+
+    mission_requirements["total_mass"] = (
+        user_total_mass
+    )
+
+    mission_requirements["required_lift"] = (
+        user_total_mass * GRAVITY
+    )
+
+    mission_requirements["cruise_speed"] = (
+        user_cruise_speed
+    )
+
+    # The mission's endurance requirement remains based on
+    # the selected mission profile because the user does not
+    # currently enter a desired endurance.
+    #
+    # Recalculate the distance covered during the required
+    # endurance using the user's requested cruise speed.
+
+    required_endurance_hours = mission_requirements[
+        "required_endurance_hours"
+    ]
+
+    distance_at_cruise_km = (
+        user_cruise_speed
+        * required_endurance_hours
+        * 3.6
+    )
+
+    mission_requirements["distance_at_cruise_km"] = (
+        distance_at_cruise_km
+    )
+
+    preset_range_km = mission_requirements.get(
+        "required_range_km",
+        mission_requirements.get(
+            "range_km",
+            0.0,
+        ),
+    )
+
+    mission_requirements["required_range_km"] = max(
+        preset_range_km,
+        distance_at_cruise_km,
+    )
+
+    # --------------------------------------------------
+    # Battery requirement comparison
+    # --------------------------------------------------
+
+    required_battery_wh = mission_requirements.get(
+        "required_battery_wh",
+        mission_requirements.get(
+            "battery_capacity_wh",
+            0.0,
+        ),
+    )
+
+    battery_margin_wh = (
+        user_battery_capacity
+        - required_battery_wh
+    )
+
+    if required_battery_wh > 0:
+        battery_margin_percent = (
+            battery_margin_wh
+            / required_battery_wh
+            * 100
+        )
+    else:
+        battery_margin_percent = 0.0
+
+    if required_battery_wh <= 0:
+        battery_status = (
+            "Battery requirement unavailable"
+        )
+    elif user_battery_capacity >= required_battery_wh:
+        battery_status = (
+            "PASS - Available battery meets requirement"
+        )
+    else:
+        battery_status = (
+            "FAIL - Available battery is undersized"
+        )
+
+    print("\n" + "=" * 72)
+    print("USER-ADJUSTED MISSION PROFILE")
+    print("=" * 72)
+    print(
+        f"Mission:                  "
+        f"{mission_requirements['mission_name']}"
+    )
+    print(
+        f"Empty Aircraft Mass:      "
+        f"{empty_aircraft_mass:.2f} kg"
+    )
+    print(
+        f"User Payload Mass:        "
+        f"{user_payload_mass:.2f} kg"
+    )
+    print(
+        f"Estimated Total Mass:     "
+        f"{user_total_mass:.2f} kg"
+    )
+    print(
+        f"Required Lift:            "
+        f"{mission_requirements['required_lift']:.2f} N"
+    )
+    print(
+        f"User Cruise Speed:        "
+        f"{user_cruise_speed:.2f} m/s"
+    )
+    print(
+        f"Maximum Wingspan:         "
+        f"{user_max_wingspan:.2f} m"
+    )
+    print(
+        f"Available Battery:        "
+        f"{user_battery_capacity:.1f} Wh"
+    )
+
+    print(
+        f"Estimated Required Battery: "
+        f"{required_battery_wh:.1f} Wh"
+    )
+
+    print(
+        f"Battery Margin:             "
+        f"{battery_margin_wh:+.1f} Wh "
+        f"({battery_margin_percent:+.1f}%)"
+    )
+
+    print(
+        f"Battery Status:             "
+        f"{battery_status}"
+    )
+
+    print(
+        f"Required Endurance:       "
+        f"{required_endurance_hours:.2f} hr"
+    )
+    print(
+        f"Distance at User Speed:   "
+        f"{distance_at_cruise_km:.1f} km"
+    )
+    print(
+        f"Required Design Range:    "
+        f"{mission_requirements['required_range_km']:.1f} km"
+    )
+    print("=" * 72)
 
     # --------------------------------------------------
     # Mission-aware random optimization
@@ -600,8 +783,8 @@ def main():
     best_random_design = optimize_aircraft(
         number_of_designs=1000,
         span_bounds=(
-            0.90,
-            1.40,
+            max(0.1, min(0.90, user_max_wingspan * 0.65)),
+            user_max_wingspan,
         ),
         root_chord_bounds=(
             0.24,
@@ -612,8 +795,8 @@ def main():
             0.28,
         ),
         cruise_speed_bounds=(
-            12.0,
-            18.0,
+            max(1.0, user_cruise_speed * 0.85),
+            user_cruise_speed * 1.05,
         ),
         airfoil=AIRFOIL,
         sweep=SWEEP,
@@ -625,7 +808,7 @@ def main():
         top_n=10,
         random_seed=42,
         mission_requirements=mission_requirements,
-        mission_name="cargo",
+        mission_name=mission_profile_name,
     )
 
     plot_optimization(
@@ -634,7 +817,7 @@ def main():
 
     # Estimate optimized-aircraft endurance and range.
     optimized_endurance_hours = estimate_endurance(
-        battery_capacity_wh=BATTERY_CAPACITY_WH,
+        battery_capacity_wh=user_battery_capacity,
         average_power_w=AVERAGE_POWER_W,
         usable_fraction=BATTERY_USABLE_FRACTION,
     )
@@ -661,10 +844,10 @@ def main():
     # --------------------------------------------------
 
     mission_evaluation = evaluate_mission(
-    aircraft_results=best_random_design,
-    mission_requirements=mission_requirements,
-    estimated_endurance_hours=optimized_endurance_hours,
-    estimated_range_km=optimized_range_km,
+        aircraft_results=best_random_design,
+        mission_requirements=mission_requirements,
+        estimated_endurance_hours=optimized_endurance_hours,
+        estimated_range_km=optimized_range_km,
     )
 
     print_mission_evaluation(
@@ -696,12 +879,12 @@ def main():
     )
 
     plot_performance_curves(
-        mass=MASS,
+        mass=analysis_mass,
         gravity=GRAVITY,
         air_density=AIR_DENSITY,
         wing_area=wing_area,
         aspect_ratio=aspect_ratio,
-        cruise_speed=CRUISE_SPEED,
+        cruise_speed=user_cruise_speed,
     )
 
     plot_design_dashboard(
