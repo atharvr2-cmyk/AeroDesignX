@@ -61,6 +61,11 @@ from config.parameters import (
 
 from geometry.wing import Wing
 
+from design.configurations import (
+    print_configuration_comparison,
+    recommend_configuration,
+)
+
 from missions.evaluator import (
     evaluate_mission,
     print_mission_evaluation,
@@ -84,6 +89,71 @@ from visualization.plot_optimization import (
 )
 from visualization.dashboard import plot_design_dashboard
 from input.user_input import collect_user_requirements
+from geometry.aircraft_geometry import (
+    generate_wing_coordinates,
+    print_wing_coordinates,
+    plot_wing_planform,
+    size_aircraft_components,
+    generate_aircraft_layout,
+    plot_aircraft_layout,
+    generate_configuration_layout,
+    generate_configuration_side_view,
+    plot_aircraft_side_view,
+)
+
+from design.configuration_geometry import get_configuration_geometry
+
+
+def get_configuration_choice(
+    recommended_configuration: str,
+) -> str:
+    """
+    Allow the user to accept the recommended configuration
+    or manually select another aircraft configuration.
+    """
+
+    configuration_options = {
+        "1": "Conventional",
+        "2": "Twin Boom",
+        "3": "Flying Wing",
+        "4": recommended_configuration,
+    }
+
+    print("\n" + "=" * 72)
+    print("AIRCRAFT CONFIGURATION SELECTION")
+    print("=" * 72)
+    print(
+        f"Recommended configuration: "
+        f"{recommended_configuration}"
+    )
+    print("\nChoose an aircraft configuration:")
+    print("1. Conventional")
+    print("2. Twin Boom")
+    print("3. Flying Wing")
+    print(
+        "4. Accept recommendation "
+        f"({recommended_configuration})"
+    )
+
+    while True:
+        choice = input(
+            "\nEnter configuration choice (1-4): "
+        ).strip()
+
+        if choice in configuration_options:
+            selected_configuration = (
+                configuration_options[choice]
+            )
+
+            print(
+                f"Selected configuration: "
+                f"{selected_configuration}"
+            )
+
+            return selected_configuration
+
+        print("Invalid choice. Please enter 1, 2, 3, or 4.")
+
 
 def main():
     """
@@ -99,6 +169,20 @@ def main():
     user_max_wingspan = requirements.max_wingspan
     user_mission = requirements.mission
 
+    print_configuration_comparison(user_mission)
+
+    configuration_result = recommend_configuration(user_mission)
+
+    recommended_configuration = configuration_result["name"]
+
+    selected_configuration = get_configuration_choice(
+        recommended_configuration=recommended_configuration,
+    )
+
+    configuration_geometry = get_configuration_geometry(
+        selected_configuration
+    )
+
     # MASS already includes the baseline payload from parameters.py.
     # Replace that baseline payload with the payload entered by the user.
     analysis_mass = max(
@@ -111,12 +195,12 @@ def main():
         "Cargo": "cargo",
         "Survey": "surveillance",
         "Racing": "racing",
-        "VTOL Support": "general",
+        "VTOL Support": "trainer",
     }
 
     mission_profile_name = mission_name_mapping.get(
         user_mission,
-        "general",
+        "trainer",
     )
 
     # Create span candidates that never exceed the user's limit.
@@ -149,12 +233,12 @@ def main():
     # --------------------------------------------------
 
     wing = Wing(
-        span=min(WING_SPAN, user_max_wingspan),
-        root_chord=ROOT_CHORD,
-        tip_chord=TIP_CHORD,
-        airfoil=AIRFOIL,
-        sweep=SWEEP,
-        dihedral=DIHEDRAL,
+        span=configuration_geometry["span"],
+        root_chord=configuration_geometry["root_chord"],
+        tip_chord=configuration_geometry["tip_chord"],
+        airfoil=configuration_geometry["airfoil"],
+        dihedral=configuration_geometry["dihedral"],
+        sweep=configuration_geometry["sweep"],
     )
 
     wing.display_info()
@@ -853,6 +937,51 @@ def main():
     print_mission_evaluation(
         mission_evaluation
     )
+
+    wing_geometry = generate_wing_coordinates(
+        span=best_random_design["span"],
+        root_chord=best_random_design["root_chord"],
+        tip_chord=best_random_design["tip_chord"],
+        sweep_deg=best_random_design.get("sweep", SWEEP),
+        dihedral_deg=best_random_design.get("dihedral", DIHEDRAL),
+    )
+
+    print_wing_coordinates(wing_geometry)
+    plot_wing_planform(wing_geometry)
+
+    component_sizes = size_aircraft_components(
+        wing_geometry=wing_geometry,
+        payload_mass=user_payload_mass,
+        mission_name=user_mission,
+    )
+
+    print("\n" + "=" * 72)
+    print("AUTOMATIC AIRCRAFT COMPONENT SIZING")
+    print("=" * 72)
+
+    for component, value in component_sizes.items():
+        readable_name = component.replace("_", " ").title()
+        print(f"{readable_name:<32}{value:.3f} m")
+
+    print("=" * 72)
+
+    aircraft_layout = generate_configuration_layout(
+        configuration_name=selected_configuration,
+        wing_geometry=wing_geometry,
+        component_sizes=component_sizes,
+    )
+
+    plot_aircraft_layout(aircraft_layout)
+
+    side_view_geometry = generate_configuration_side_view(
+        configuration_name=selected_configuration,
+        aircraft_layout=aircraft_layout,
+    )
+
+    plot_aircraft_side_view(
+        side_view_geometry=side_view_geometry,
+    )
+    # plot_aircraft_side_view(aircraft_layout)
 
     # --------------------------------------------------
     # Visualization plots
