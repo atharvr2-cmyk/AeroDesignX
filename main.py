@@ -102,6 +102,9 @@ from geometry.aircraft_geometry import (
 )
 
 from design.configuration_geometry import get_configuration_geometry
+from visualization.aircraft_3d import plot_aircraft_3d
+
+from cad.aircraft_cad import generate_and_export_aircraft_cad
 
 
 def get_configuration_choice(
@@ -981,6 +984,23 @@ def main():
     plot_aircraft_side_view(
         side_view_geometry=side_view_geometry,
     )
+
+    plot_aircraft_3d(
+        aircraft_layout=aircraft_layout,
+    )
+
+    print("\nGenerating 3D CAD model...")
+
+    generate_and_export_aircraft_cad(
+        configuration_name=selected_configuration,
+        wing_geometry=wing_geometry,
+        component_sizes=component_sizes,
+    )
+
+    print("3D CAD model generated successfully.")
+
+# plot_aircraft_side_view(aircraft_layout)
+    
     # plot_aircraft_side_view(aircraft_layout)
 
     # --------------------------------------------------

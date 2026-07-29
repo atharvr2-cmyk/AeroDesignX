@@ -22,3 +22,9 @@ cfd/results/
 *.stp
 *.iges
 *.igs
+
+.venv/
+.venv-cad/
+venv/
+__pycache__/
+*.py[cod]
