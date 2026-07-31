@@ -172,9 +172,21 @@ def main():
     user_max_wingspan = requirements.max_wingspan
     user_mission = requirements.mission
 
-    print_configuration_comparison(user_mission)
+    print_configuration_comparison(
+        mission_name=user_mission,
+        payload_mass=user_payload_mass,
+        cruise_speed=user_cruise_speed,
+        max_wingspan=user_max_wingspan,
+        battery_capacity=user_battery_capacity,
+    )
 
-    configuration_result = recommend_configuration(user_mission)
+    configuration_result = recommend_configuration(
+        mission_name=user_mission,
+        payload_mass=user_payload_mass,
+        cruise_speed=user_cruise_speed,
+        max_wingspan=user_max_wingspan,
+        battery_capacity=user_battery_capacity,
+    )
 
     recommended_configuration = configuration_result["name"]
 
@@ -1007,44 +1019,44 @@ def main():
     # Visualization plots
     # --------------------------------------------------
 
-    plot_airfoil(
-        upper_surface,
-        lower_surface,
-    )
+    # plot_airfoil(
+    #     upper_surface,
+    #     lower_surface,
+    # )
 
-    plot_wing_3d(
-        wing,
-        show_full_wing=True,
-    )
+    # plot_wing_3d(
+    #     wing,
+    #     show_full_wing=True,
+    # )
 
-    plot_drag_polar(
-        aspect_ratio=aspect_ratio,
-        operating_cl=required_cl_value,
-    )
+    # plot_drag_polar(
+    #     aspect_ratio=aspect_ratio,
+    #     operating_cl=required_cl_value,
+    # )
 
-    plot_lift_curve(
-        operating_cl=required_cl_value,
-        cl_max=CL_MAX,
-    )
+    # plot_lift_curve(
+    #     operating_cl=required_cl_value,
+    #     cl_max=CL_MAX,
+    # )
 
-    plot_performance_curves(
-        mass=analysis_mass,
-        gravity=GRAVITY,
-        air_density=AIR_DENSITY,
-        wing_area=wing_area,
-        aspect_ratio=aspect_ratio,
-        cruise_speed=user_cruise_speed,
-    )
+    # plot_performance_curves(
+    #     mass=analysis_mass,
+    #     gravity=GRAVITY,
+    #     air_density=AIR_DENSITY,
+    #     wing_area=wing_area,
+    #     aspect_ratio=aspect_ratio,
+    #     cruise_speed=user_cruise_speed,
+    # )
 
-    plot_design_dashboard(
-        wing=wing,
-        operating_cl=required_cl_value,
-        optimization_history=best_random_design[
-            "optimization_history"
-        ],
-        aircraft_results=best_random_design,
-        mission_results=mission_evaluation,
-    )
+    # plot_design_dashboard(
+    #     wing=wing,
+    #     operating_cl=required_cl_value,
+    #     optimization_history=best_random_design[
+    #         "optimization_history"
+    #     ],
+    #     aircraft_results=best_random_design,
+    #     mission_results=mission_evaluation,
+    # )
 
 if __name__ == "__main__":
     main()
